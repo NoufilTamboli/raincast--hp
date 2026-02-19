@@ -1,16 +1,49 @@
-# backend/app.py
+from flask import Flask, jsonify, request
+from database import engine, Base
+from services.weather_service import fetch_and_store_weather
 
-from fastapi import FastAPI
-from backend.database import engine, Base
-from backend.routes import router  # ✅ Import your routes from routes.py
+app = Flask(__name__)
 
-# Initialize FastAPI app
-app = FastAPI(title="RainCast HP API", version="1.0")
+Base.metadata.create_all(bind=engine)
 
-# ✅ Include all routes from routes.py
-app.include_router(router)
 
-# ✅ Create database tables on startup
-@app.on_event("startup")
-def startup():
-    Base.metadata.create_all(bind=engine)
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({
+        "message": "Himachal Flood Prediction REST API"
+    })
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({
+        "status": "API is running"
+    })
+
+
+@app.route("/weather/fetch", methods=["GET"])
+def fetch_weather():
+    city = request.args.get("city")
+
+    if not city:
+        return jsonify({"error": "City parameter is required"}), 400
+
+    try:
+        weather = fetch_and_store_weather(city)
+
+        return jsonify({
+            "id": weather.id,
+            "location_name": weather.location_name,
+            "temperature": weather.temperature,
+            "humidity": weather.humidity,
+            "rainfall_mm": weather.rainfall_mm,
+            "timestamp": weather.timestamp
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+

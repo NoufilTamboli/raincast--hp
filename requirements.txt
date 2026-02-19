@@ -1,9 +1,8 @@
-fastapi
-uvicorn[standard]
+flask
 sqlalchemy
 psycopg2-binary
 python-dotenv
-streamlit
-plotly
-pandas
 requests
+pandas
+plotly
+streamlit
